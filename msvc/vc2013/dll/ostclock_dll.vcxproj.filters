@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\DateTimeFormat.cpp" />
+    <ClCompile Include="..\..\..\src\DllHook.cpp" />
+    <ClCompile Include="..\..\..\src\DllMain.cpp" />
+    <ClCompile Include="..\..\..\src\OutputDebugString.cpp" />
+    <ClCompile Include="..\..\..\src\Util.cpp" />
+    <ClCompile Include="..\..\..\src\stdafx.cpp" />
+    <ClCompile Include="..\..\..\src\Registry.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\DateTimeFormat.h" />
+    <ClInclude Include="..\..\..\src\DllHook.h" />
+    <ClInclude Include="..\..\..\src\DllMain.h" />
+    <ClInclude Include="..\..\..\src\FileMapping.h" />
+    <ClInclude Include="..\..\..\src\OutputDebugString.h" />
+    <ClInclude Include="..\..\..\src\Util.h" />
+    <ClInclude Include="..\..\..\src\VisualCppBasicMacro.h" />
+    <ClInclude Include="..\..\..\src\WindowsBasicApi.h" />
+    <ClInclude Include="..\..\..\src\stdafx.h" />
+    <ClInclude Include="..\..\..\src\Registry.h" />
+  </ItemGroup>
+</Project>

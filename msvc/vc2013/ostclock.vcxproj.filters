@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="..\..\src\ComboBox.h" />
+    <ClInclude Include="..\..\src\DateTimeFormat.h" />
+    <ClInclude Include="..\..\src\DllLoader.h" />
+    <ClInclude Include="..\..\src\EnsureSingleInstance.h" />
+    <ClInclude Include="..\..\src\FileMapping.h" />
+    <ClInclude Include="..\..\src\Font.h" />
+    <ClInclude Include="..\..\src\OutputDebugString.h" />
+    <ClInclude Include="..\..\src\PopupMenu.h" />
+    <ClInclude Include="..\..\src\PropertySheet.h" />
+    <ClInclude Include="..\..\src\PropertySheetPageColor.h" />
+    <ClInclude Include="..\..\src\Registry.h" />
+    <ClInclude Include="..\..\src\ResourcelessDialog.h" />
+    <ClInclude Include="..\..\src\stdafx.h" />
+    <ClInclude Include="..\..\src\TaskbarMessage.h" />
+    <ClInclude Include="..\..\src\Timer.h" />
+    <ClInclude Include="..\..\src\Util.h" />
+    <ClInclude Include="..\..\src\VisualCppBasicMacro.h" />
+    <ClInclude Include="..\..\src\WindowsBasicApi.h" />
+    <ClInclude Include="..\..\src\WinMain.h" />
+    <ClInclude Include="..\..\src\ostclock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\DateTimeFormat.cpp" />
+    <ClCompile Include="..\..\src\OutputDebugString.cpp" />
+    <ClCompile Include="..\..\src\PropertySheet.cpp" />
+    <ClCompile Include="..\..\src\PropertySheetPageColor.cpp" />
+    <ClCompile Include="..\..\src\Registry.cpp" />
+    <ClCompile Include="..\..\src\stdafx.cpp" />
+    <ClCompile Include="..\..\src\Util.cpp" />
+    <ClCompile Include="..\..\src\WinMain.cpp" />
+  </ItemGroup>
+</Project>
