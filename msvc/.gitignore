@@ -1,0 +1,14 @@
+*.exe
+*.dll
+*.lib
+
+*.aps
+*.exp
+*.ilk
+*.opensdf
+*.pdb
+*.sdf
+*.suo
+
+ostclock/
+ostclock_dll/
