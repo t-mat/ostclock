@@ -105,7 +105,7 @@ void initComboFont(HWND hDlg, int iDlgItem) {
 				const auto facename = l.lfFaceName;
 				if(   facename[0] != _T('@')
 				   && LB_ERR == sendMessage(
-					     hCombo
+						 hCombo
 					   , CB_FINDSTRINGEXACT
 					   , 0
 					   , facename
