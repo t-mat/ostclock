@@ -86,14 +86,14 @@ Config loadConfig() {
 
     config.font.size = std::max<int>(6, config.font.size);
 
-    dump(config);
+//	dump(config);
 
     return config;
 }
 
 
 void saveConfig(const Config& config) {
-    dump(config);
+//	dump(config);
 
     setRegLong(_T("Width")              , config.text.width);
     setRegLong(_T("Height")             , config.text.height);
