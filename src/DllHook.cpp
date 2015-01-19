@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "Font.h"
 #include "Registry.h"
+#include "Config.h"
 #include "WinMain.h"
 #include "DllMain.h"
 #include "DllHook.h"

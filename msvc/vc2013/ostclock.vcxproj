@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\ComboBox.h" />
+    <ClInclude Include="..\..\src\Config.h" />
     <ClInclude Include="..\..\src\DateTimeFormat.h" />
     <ClInclude Include="..\..\src\DllLoader.h" />
     <ClInclude Include="..\..\src\EnsureSingleInstance.h" />
@@ -171,11 +172,11 @@
     <ClInclude Include="..\..\src\WinMain.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\Config.cpp" />
     <ClCompile Include="..\..\src\DateTimeFormat.cpp" />
     <ClCompile Include="..\..\src\OutputDebugString.cpp" />
     <ClCompile Include="..\..\src\PropertySheet.cpp" />
     <ClCompile Include="..\..\src\PropertySheetPageColor.cpp" />
-    <ClCompile Include="..\..\src\Registry.cpp" />
     <ClCompile Include="..\..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

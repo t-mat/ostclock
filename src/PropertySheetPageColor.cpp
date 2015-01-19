@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "Registry.h"
+#include "Config.h"
 #include "Font.h"
 #include "ResourcelessDialog.h"
 #include "ComboBox.h"

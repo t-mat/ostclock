@@ -153,11 +153,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\Config.cpp" />
     <ClCompile Include="..\..\..\src\DateTimeFormat.cpp" />
     <ClCompile Include="..\..\..\src\DllHook.cpp" />
     <ClCompile Include="..\..\..\src\DllMain.cpp" />
     <ClCompile Include="..\..\..\src\OutputDebugString.cpp" />
-    <ClCompile Include="..\..\..\src\Registry.cpp" />
     <ClCompile Include="..\..\..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -167,6 +167,7 @@
     <ClCompile Include="..\..\..\src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\Config.h" />
     <ClInclude Include="..\..\..\src\DateTimeFormat.h" />
     <ClInclude Include="..\..\..\src\DllHook.h" />
     <ClInclude Include="..\..\..\src\DllMain.h" />

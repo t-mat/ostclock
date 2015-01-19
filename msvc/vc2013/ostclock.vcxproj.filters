@@ -21,15 +21,16 @@
     <ClInclude Include="..\..\src\WindowsBasicApi.h" />
     <ClInclude Include="..\..\src\WinMain.h" />
     <ClInclude Include="..\..\src\ostclock.h" />
+    <ClInclude Include="..\..\src\Config.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\DateTimeFormat.cpp" />
     <ClCompile Include="..\..\src\OutputDebugString.cpp" />
     <ClCompile Include="..\..\src\PropertySheet.cpp" />
     <ClCompile Include="..\..\src\PropertySheetPageColor.cpp" />
-    <ClCompile Include="..\..\src\Registry.cpp" />
     <ClCompile Include="..\..\src\stdafx.cpp" />
     <ClCompile Include="..\..\src\Util.cpp" />
     <ClCompile Include="..\..\src\WinMain.cpp" />
+    <ClCompile Include="..\..\src\Config.cpp" />
   </ItemGroup>
 </Project>

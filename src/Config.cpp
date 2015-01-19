@@ -1,98 +1,10 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "Registry.h"
+#include "Config.h"
 
 namespace {
 
-using RegFunc = std::function<void(HKEY)>;
 const TCHAR myKey[] = _T(APP_REGKEY);
-
-
-void openKey(const RegFunc& regFunc, const TCHAR* baseSubKey = myKey) {
-    HKEY hKey = nullptr;
-    RegOpenKey(HKEY_CURRENT_USER, baseSubKey, &hKey);
-    if(hKey) {
-        regFunc(hKey);
-        RegCloseKey(hKey);
-    }
-}
-
-
-void createKey(const RegFunc& regFunc, const TCHAR* baseSubKey = myKey) {
-    HKEY hKey = nullptr;
-    RegCreateKey(HKEY_CURRENT_USER, baseSubKey, &hKey);
-    if(hKey) {
-        regFunc(hKey);
-        RegCloseKey(hKey);
-    }
-}
-
-
-bool setRegLong(const TCHAR* entry, DWORD val) {
-    LONG r = ERROR_INVALID_FUNCTION;
-    const auto* p = reinterpret_cast<const BYTE*>(&val);
-    const auto bytes = static_cast<DWORD>(sizeof(val));
-    createKey([&](HKEY hKey) {
-        r = RegSetValueEx(hKey, entry, 0, REG_DWORD, p, bytes);
-    });
-    return ERROR_SUCCESS == r;
-}
-
-
-bool setRegStr(const TCHAR* entry, const TCHAR* val) {
-    LONG r = ERROR_INVALID_FUNCTION;
-    const auto* p = reinterpret_cast<const BYTE*>(val);
-    const auto bytes = static_cast<DWORD>(_tcslen(val) * sizeof(*val));
-    createKey([&](HKEY hKey) {
-        r = RegSetValueEx(hKey, entry, 0, REG_SZ, p, bytes);
-    });
-    return ERROR_SUCCESS == r;
-}
-
-
-LONG getRegLong(const TCHAR* entry, LONG defaultVal = 0) {
-    LONG result = 0;
-    LONG r = ERROR_INVALID_FUNCTION;
-    DWORD size = sizeof(result);
-    openKey([&](HKEY hKey) {
-        r = RegQueryValueEx(hKey, entry, 0, nullptr, (LPBYTE)&result, &size);
-    });
-    if(ERROR_SUCCESS != r || sizeof(result) != size) {
-        result = defaultVal;
-    }
-    return result;
-}
-
-
-template <class T, class U = LONG>
-T getRegLong(const TCHAR* entry, U defval = (U)0) {
-    return static_cast<T>(getRegLong(entry, (LONG) defval));
-}
-
-
-std::wstring getRegStr(
-      const TCHAR* entry
-    , const TCHAR* defval = _T("")
-    , const TCHAR* baseSubKey = myKey
-) {
-    std::array<TCHAR, 1024> buf;
-
-    DWORD size = static_cast<DWORD>(buf.size() * sizeof(buf[0]));
-    LONG r = ERROR_INVALID_FUNCTION;
-
-    openKey([&](HKEY hKey) {
-        r = RegQueryValueEx(hKey, entry, 0, nullptr, (LPBYTE)buf.data(), &size);
-    }, baseSubKey);
-
-    if(ERROR_SUCCESS == r) {
-        if(size == 0) {
-            buf[0] = 0;
-        }
-    } else {
-        _tcscpy_s(buf.data(), buf.size(), defval);
-    }
-    return buf.data();
-}
-
 
 void dump(const Config& config) {
     config;
@@ -111,6 +23,29 @@ void dump(const Config& config) {
     outputDebugString(L"config.font.langId           = %d\n",       config.font.langId          );
     outputDebugString(L"config.font.quality          = %d\n",       config.font.quality         );
 }
+
+
+template<typename T = int, typename U = int>
+T getRegLong(const TCHAR* subKey, U defaultVal = (U)0) {
+    return getRegDword<T>(HKEY_CURRENT_USER, myKey, subKey, defaultVal);
+};
+
+
+std::wstring getRegStr(const TCHAR* subKey, const TCHAR* defaultVal = _T("")) {
+    return getRegStr(HKEY_CURRENT_USER, myKey, subKey, defaultVal);
+};
+
+
+template<typename T = int>
+void setRegLong(const TCHAR* subKey, T val) {
+    setRegDword(HKEY_CURRENT_USER, myKey, subKey, val);
+};
+
+
+void setRegStr(const TCHAR* subKey, const TCHAR* val) {
+    setRegStr(HKEY_CURRENT_USER, myKey, subKey, val);
+};
+
 
 } // Anonymous namespace
 
@@ -134,9 +69,10 @@ Config loadConfig() {
 
     {
         const auto t = getRegStr(
-              _T("ThemeActive")
-            , _T("0")
+              HKEY_CURRENT_USER
             , _T("Software\\Microsoft\\Windows\\CurrentVersion\\ThemeManager")
+            , _T("ThemeActive")
+            , _T("0")
         );
         config.explore.isXpStyle = (_T('1') == t[0]);
     }
