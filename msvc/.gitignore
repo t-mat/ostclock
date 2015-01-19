@@ -5,6 +5,7 @@
 *.aps
 *.exp
 *.ilk
+*.ipch
 *.opensdf
 *.pdb
 *.sdf
