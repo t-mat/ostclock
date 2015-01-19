@@ -20,11 +20,11 @@
 #if !defined(UNUSED)
 #  if defined(_MSC_VER)
 // http://stackoverflow.com/a/4816375/2132223
-#    define UNUSED(x)						\
-		__pragma(warning(push))				\
-		__pragma(warning(disable:4127))		\
-		do { (void)(x); } while(false)		\
-		__pragma(warning(pop))
+#    define UNUSED(x)                       \
+        __pragma(warning(push))             \
+        __pragma(warning(disable:4127))     \
+        do { (void)(x); } while(false)      \
+        __pragma(warning(pop))
 #  else
 #    define UNUSED(x) do { (void)(x); } while(0)
 #  endif

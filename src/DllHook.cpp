@@ -15,399 +15,399 @@
 
 namespace {
 
-Config	config {};
-Timer	timer {};
-Font	font {};
-HDC		hdcClock { nullptr };
-HBITMAP	hbmpClock { nullptr };
-WNDPROC	oldWndProc { nullptr };
-HHOOK	hHook { nullptr };
-HWND	hwndClock { nullptr };
-HWND	hwndMain { nullptr };
-int		iClockWidth { -1 };
-bool	bExiting { false };
+Config  config {};
+Timer   timer {};
+Font    font {};
+HDC     hdcClock { nullptr };
+HBITMAP hbmpClock { nullptr };
+WNDPROC oldWndProc { nullptr };
+HHOOK   hHook { nullptr };
+HWND    hwndClock { nullptr };
+HWND    hwndMain { nullptr };
+int     iClockWidth { -1 };
+bool    bExiting { false };
 
 
 RECT getClientRect(HWND hWnd) {
-	RECT rc;
-	GetClientRect(hWnd, &rc);
-	return rc;
+    RECT rc;
+    GetClientRect(hWnd, &rc);
+    return rc;
 }
 
 
 TEXTMETRIC getTextMetrics(HDC hdc) {
-	TEXTMETRIC tm;
-	GetTextMetrics(hdc, &tm);
-	return tm;
+    TEXTMETRIC tm;
+    GetTextMetrics(hdc, &tm);
+    return tm;
 }
 
 
 SYSTEMTIME getDisplayTime() {
-	SYSTEMTIME st;
-	GetLocalTime(&st);
-	return st;
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    return st;
 }
 
 
 POINT drawText(
-	  HDC hdc
-	, TCHAR* text
-	, bool bDraw
-	, int xOfs
-	, int yOfs
-	, int yOfs2
-	, int lineSpacing
+      HDC hdc
+    , TCHAR* text
+    , bool bDraw
+    , int xOfs
+    , int yOfs
+    , int yOfs2
+    , int lineSpacing
 ) {
-	const auto tm = getTextMetrics(hdc);
-	const int hf = tm.tmHeight - tm.tmInternalLeading;
-	int w = 0;
-	int y = hf / 4 - tm.tmInternalLeading / 2;
-	for(auto* p = text; *p; ) {
-		auto* sp = p;
-		while(*p && *p != 0x0a) {
-			p++;
-		}
-		if(*p == 0x0a) {
-			*p++ = 0;
-		}
+    const auto tm = getTextMetrics(hdc);
+    const int hf = tm.tmHeight - tm.tmInternalLeading;
+    int w = 0;
+    int y = hf / 4 - tm.tmInternalLeading / 2;
+    for(auto* p = text; *p; ) {
+        auto* sp = p;
+        while(*p && *p != 0x0a) {
+            p++;
+        }
+        if(*p == 0x0a) {
+            *p++ = 0;
+        }
 
-		if(bDraw) {
-			if(*p == 0 && sp == text) {
-				y = (yOfs - tm.tmHeight) / 2  - tm.tmInternalLeading / 4;
-			}
-			TextOut(hdc, xOfs, y + yOfs2, sp, (int)_tcslen(sp));
-		}
+        if(bDraw) {
+            if(*p == 0 && sp == text) {
+                y = (yOfs - tm.tmHeight) / 2  - tm.tmInternalLeading / 4;
+            }
+            TextOut(hdc, xOfs, y + yOfs2, sp, (int)_tcslen(sp));
+        }
 
-		const auto len = static_cast<int>(_tcslen(sp));
-		SIZE sz {};
-		if(GetTextExtentPoint32(hdc, sp, len, &sz) == 0) {
-			sz.cx = len * tm.tmAveCharWidth;
-		}
-		if(w < sz.cx) {
-			w = sz.cx;
-		}
-		y += hf;
-		if(*p) {
-			y += 2 + lineSpacing;
-		}
-	}
-	w += tm.tmAveCharWidth * 2;
-	return { w, y };
+        const auto len = static_cast<int>(_tcslen(sp));
+        SIZE sz {};
+        if(GetTextExtentPoint32(hdc, sp, len, &sz) == 0) {
+            sz.cx = len * tm.tmAveCharWidth;
+        }
+        if(w < sz.cx) {
+            w = sz.cx;
+        }
+        y += hf;
+        if(*p) {
+            y += 2 + lineSpacing;
+        }
+    }
+    w += tm.tmAveCharWidth * 2;
+    return { w, y };
 }
 
 
 void destroyClockDc() {
-	if(hdcClock) {
-		DeleteDC(hdcClock);
-		hdcClock = nullptr;
-	}
+    if(hdcClock) {
+        DeleteDC(hdcClock);
+        hdcClock = nullptr;
+    }
 
-	if(hbmpClock) {
-		DeleteObject(hbmpClock);
-		hbmpClock = nullptr;
-	}
+    if(hbmpClock) {
+        DeleteObject(hbmpClock);
+        hbmpClock = nullptr;
+    }
 }
 
 
 void deleteClockRes() {
-	font.close();
-	destroyClockDc();
-	timer.killTimer();
+    font.close();
+    destroyClockDc();
+    timer.killTimer();
 }
 
 
 void endClock() {
-	bExiting = true;
-	deleteClockRes();
+    bExiting = true;
+    deleteClockRes();
 
-	if(isWindow(hwndClock)) {
-		if(oldWndProc) {
-			setWindowLongPtr(hwndClock, GWLP_WNDPROC, oldWndProc);
-		}
-		oldWndProc = nullptr;
-	}
+    if(isWindow(hwndClock)) {
+        if(oldWndProc) {
+            setWindowLongPtr(hwndClock, GWLP_WNDPROC, oldWndProc);
+        }
+        oldWndProc = nullptr;
+    }
 
-	if(isWindow(hwndMain)) {
-		postMessage(hwndMain, WM_DLL_TO_MAINWND_EXIT);
-	}
+    if(isWindow(hwndMain)) {
+        postMessage(hwndMain, WM_DLL_TO_MAINWND_EXIT);
+    }
 }
 
 
 void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
-	if(!hdcClock || !hbmpClock) {
-		destroyClockDc();
-		if(HDC hdc = GetDC(nullptr)) {
-			hdcClock = CreateCompatibleDC(hdc);
-			if(hdcClock) {
-				RECT rc = getClientRect(hwnd);
-				hbmpClock = CreateCompatibleBitmap(
-					  hdc
-					, rc.right
-					, rc.bottom
-				);
-				if(hbmpClock) {
-					SelectObject(hdcClock, hbmpClock);
-					font.select(hdcClock);
-					SetBkMode	(hdcClock, TRANSPARENT);
-					SetTextAlign(hdcClock, TA_CENTER|TA_TOP);
-					SetTextColor(hdcClock, config.text.color.foreground);
-				}
-			}
-			ReleaseDC(nullptr, hdc);
-		}
-	}
+    if(!hdcClock || !hbmpClock) {
+        destroyClockDc();
+        if(HDC hdc = GetDC(nullptr)) {
+            hdcClock = CreateCompatibleDC(hdc);
+            if(hdcClock) {
+                RECT rc = getClientRect(hwnd);
+                hbmpClock = CreateCompatibleBitmap(
+                      hdc
+                    , rc.right
+                    , rc.bottom
+                );
+                if(hbmpClock) {
+                    SelectObject(hdcClock, hbmpClock);
+                    font.select(hdcClock);
+                    SetBkMode   (hdcClock, TRANSPARENT);
+                    SetTextAlign(hdcClock, TA_CENTER|TA_TOP);
+                    SetTextColor(hdcClock, config.text.color.foreground);
+                }
+            }
+            ReleaseDC(nullptr, hdc);
+        }
+    }
 
-	if(!hdcClock || !hbmpClock) {
-		return;
-	}
+    if(!hdcClock || !hbmpClock) {
+        return;
+    }
 
-	auto bmp = getObject<BITMAP>(hbmpClock);
+    auto bmp = getObject<BITMAP>(hbmpClock);
 
-	if(config.explore.isXpStyle) {
-		DrawThemeParentBackground(hwnd, hdcClock, nullptr);
-	} else {
-		RECT rc {};
-		rc.right = bmp.bmWidth;
-		rc.bottom = bmp.bmHeight;
-		HBRUSH hbr = CreateSolidBrush(config.text.color.background);
-		FillRect(hdcClock, &rc, hbr);
-		DeleteObject(hbr);
-	}
+    if(config.explore.isXpStyle) {
+        DrawThemeParentBackground(hwnd, hdcClock, nullptr);
+    } else {
+        RECT rc {};
+        rc.right = bmp.bmWidth;
+        rc.bottom = bmp.bmHeight;
+        HBRUSH hbr = CreateSolidBrush(config.text.color.background);
+        FillRect(hdcClock, &rc, hbr);
+        DeleteObject(hbr);
+    }
 
-	SetTextColor(hdc, config.text.color.foreground);
-	const RECT rcClock = getClientRect(hwnd);
+    SetTextColor(hdc, config.text.color.foreground);
+    const RECT rcClock = getClientRect(hwnd);
 
-	auto f = makeDateTimeString(
-		  pt
-		, config.text.format.data()
-		, LOCALE_USER_DEFAULT
-	);
+    auto f = makeDateTimeString(
+          pt
+        , config.text.format.data()
+        , LOCALE_USER_DEFAULT
+    );
 
-	const auto ept = drawText(
-		  hdcClock
-		, f.data()
-		, true
-		, config.text.xPos + rcClock.right / 2
-		, rcClock.bottom
-		, config.text.yPos
-		, config.text.lineSpacing
-	);
+    const auto ept = drawText(
+          hdcClock
+        , f.data()
+        , true
+        , config.text.xPos + rcClock.right / 2
+        , rcClock.bottom
+        , config.text.yPos
+        , config.text.lineSpacing
+    );
 
-	BitBlt(hdc, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcClock, 0, 0, SRCCOPY);
+    BitBlt(hdc, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcClock, 0, 0, SRCCOPY);
 
-	const auto w = ept.x + config.text.width;
-	if(w > iClockWidth) {
-		iClockWidth = w;
-		postMessage(GetParent(GetParent(hwnd)), WM_SIZE, SIZE_RESTORED, 0);
-	}
+    const auto w = ept.x + config.text.width;
+    if(w > iClockWidth) {
+        iClockWidth = w;
+        postMessage(GetParent(GetParent(hwnd)), WM_SIZE, SIZE_RESTORED, 0);
+    }
 }
 
 
 void onTimer(HWND hwnd, WPARAM) {
-	const auto t = getDisplayTime();
-	timer.update(t);
-	if(HDC hdc = GetDC(hwnd)) {
-		drawClockSub(hwnd, hdc, t);
-		ReleaseDC(hwnd, hdc);
-	}
+    const auto t = getDisplayTime();
+    timer.update(t);
+    if(HDC hdc = GetDC(hwnd)) {
+        drawClockSub(hwnd, hdc, t);
+        ReleaseDC(hwnd, hdc);
+    }
 }
 
 
 LRESULT onCalcRect(HWND hwnd) {
-	if(!(getWindowLongPtr(hwnd, GWL_STYLE) & WS_VISIBLE)) {
-		return 0;
-	}
+    if(!(getWindowLongPtr(hwnd, GWL_STYLE) & WS_VISIBLE)) {
+        return 0;
+    }
 
-	if(HDC hdc = GetDC(hwnd)) {
-		font.select(hdc);
+    if(HDC hdc = GetDC(hwnd)) {
+        font.select(hdc);
 
-		auto f = makeDateTimeString(
-			  getDisplayTime()
-			, config.text.format.data()
-			, LOCALE_USER_DEFAULT
-		);
+        auto f = makeDateTimeString(
+              getDisplayTime()
+            , config.text.format.data()
+            , LOCALE_USER_DEFAULT
+        );
 
-		const auto ept = drawText(
-			  hdc
-			, f.data()
-			, false
-			, config.text.xPos
-			, 0
-			, config.text.yPos
-			, config.text.lineSpacing
-		);
+        const auto ept = drawText(
+              hdc
+            , f.data()
+            , false
+            , config.text.xPos
+            , 0
+            , config.text.yPos
+            , config.text.lineSpacing
+        );
 
-		const auto tm = getTextMetrics(hdc);
-		const int hf = tm.tmHeight - tm.tmInternalLeading;
-		int w = ept.x;
-		int h = ept.y + hf / 2;
+        const auto tm = getTextMetrics(hdc);
+        const int hf = tm.tmHeight - tm.tmInternalLeading;
+        int w = ept.x;
+        int h = ept.y + hf / 2;
 
-		if(iClockWidth < 0) {
-			iClockWidth = w;
-		} else {
-			w = iClockWidth;
-		}
-		w += config.text.width;
-		h += config.text.height;
+        if(iClockWidth < 0) {
+            iClockWidth = w;
+        } else {
+            w = iClockWidth;
+        }
+        w += config.text.width;
+        h += config.text.height;
 
-		w = std::max<int>(8, w);
-		h = std::max<int>(8, h);
+        w = std::max<int>(8, w);
+        h = std::max<int>(8, h);
 
-		ReleaseDC(hwnd, hdc);
-		return MAKELONG(w, h);
-	}
+        ReleaseDC(hwnd, hdc);
+        return MAKELONG(w, h);
+    }
 
-	return 0;
+    return 0;
 }
 
 
 LRESULT CALLBACK
 wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	switch(uMsg) {
-	default:
-		break;
+    switch(uMsg) {
+    default:
+        break;
 
-	case WM_DESTROY:
-		deleteClockRes();
-		break;
+    case WM_DESTROY:
+        deleteClockRes();
+        break;
 
-	case TRAYCLOCK_MSG_CALC_RECT:
-		return onCalcRect(hwnd);
+    case TRAYCLOCK_MSG_CALC_RECT:
+        return onCalcRect(hwnd);
 
-	case WM_ERASEBKGND:
-		return 0;
+    case WM_ERASEBKGND:
+        return 0;
 
-	case WM_SYSCOLORCHANGE:
-		config = loadConfig();
-		//break; // fall through
-	case WM_TIMECHANGE:
-		destroyClockDc();
-		InvalidateRect(hwnd, nullptr, FALSE);
-		return 0;
+    case WM_SYSCOLORCHANGE:
+        config = loadConfig();
+        //break; // fall through
+    case WM_TIMECHANGE:
+        destroyClockDc();
+        InvalidateRect(hwnd, nullptr, FALSE);
+        return 0;
 
-	case WM_PAINT:
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hwnd, &ps);
-			drawClockSub(hwnd, hdc, getDisplayTime());
-			EndPaint(hwnd, &ps);
-		}
-		return 0;
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            drawClockSub(hwnd, hdc, getDisplayTime());
+            EndPaint(hwnd, &ps);
+        }
+        return 0;
 
-	case WM_TIMER:
-		onTimer(hwnd, wParam);
-		return 0;
+    case WM_TIMER:
+        onTimer(hwnd, wParam);
+        return 0;
 
-	case WM_MOUSEMOVE:
-		return 0;
+    case WM_MOUSEMOVE:
+        return 0;
 
-	case WM_LBUTTONDOWN:
-		postMessage(hwndMain, WM_DLL_TO_MAINWND_LEFT_CLICK);
-		return 0;
+    case WM_LBUTTONDOWN:
+        postMessage(hwndMain, WM_DLL_TO_MAINWND_LEFT_CLICK);
+        return 0;
 
-	case WM_CONTEXTMENU:
-		postMessage(hwndMain, WM_DLL_TO_MAINWND_CONTEXTMENU);
-		return 0;
+    case WM_CONTEXTMENU:
+        postMessage(hwndMain, WM_DLL_TO_MAINWND_CONTEXTMENU);
+        return 0;
 
-	case WM_NCHITTEST:
-		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    case WM_NCHITTEST:
+        return DefWindowProc(hwnd, uMsg, wParam, lParam);
 
-	case WM_MOUSEACTIVATE:
-		return MA_ACTIVATE;
+    case WM_MOUSEACTIVATE:
+        return MA_ACTIVATE;
 
-	case WM_WINDOWPOSCHANGING:
-		if(auto* pwp = reinterpret_cast<LPWINDOWPOS>(lParam)) {
-			if(IsWindowVisible(hwnd) && !(pwp->flags & SWP_NOSIZE)) {
-				const auto h = HIWORD(onCalcRect(hwnd));
-				if(pwp->cy > h) {
-					pwp->cy = h;
-				}
-			}
-		}
-		break;
+    case WM_WINDOWPOSCHANGING:
+        if(auto* pwp = reinterpret_cast<LPWINDOWPOS>(lParam)) {
+            if(IsWindowVisible(hwnd) && !(pwp->flags & SWP_NOSIZE)) {
+                const auto h = HIWORD(onCalcRect(hwnd));
+                if(pwp->cy > h) {
+                    pwp->cy = h;
+                }
+            }
+        }
+        break;
 
-	case WM_CLOCK_REFRESH_CLOCK: // refresh the clock
-		config = loadConfig();
-		initDateTimeFormat();
-		font.open(
-			  static_cast<WORD>(config.font.langId)
-			, config.font.quality
-			, config.font.name.data()
-			, config.font.size
-			, config.font.bold ? FW_BOLD : 0
-			, config.font.italic
-			, 0
-		);
-		timer.start(hwnd);
-		iClockWidth = -1;
-		destroyClockDc();
-		InvalidateRect(hwnd, nullptr, FALSE);
-		InvalidateRect(GetParent(hwnd), nullptr, TRUE);
-		return 0;
+    case WM_CLOCK_REFRESH_CLOCK: // refresh the clock
+        config = loadConfig();
+        initDateTimeFormat();
+        font.open(
+              static_cast<WORD>(config.font.langId)
+            , config.font.quality
+            , config.font.name.data()
+            , config.font.size
+            , config.font.bold ? FW_BOLD : 0
+            , config.font.italic
+            , 0
+        );
+        timer.start(hwnd);
+        iClockWidth = -1;
+        destroyClockDc();
+        InvalidateRect(hwnd, nullptr, FALSE);
+        InvalidateRect(GetParent(hwnd), nullptr, TRUE);
+        return 0;
 
-	case WM_CLOCK_REFRESH_TASKBAR: // refresh other elements than clock
-		destroyClockDc();
-		postMessage(GetParent(GetParent(hwnd)), WM_SIZE, SIZE_RESTORED);
-		InvalidateRect(GetParent(GetParent(hwnd)), nullptr, TRUE);
-		return 0;
+    case WM_CLOCK_REFRESH_TASKBAR: // refresh other elements than clock
+        destroyClockDc();
+        postMessage(GetParent(GetParent(hwnd)), WM_SIZE, SIZE_RESTORED);
+        InvalidateRect(GetParent(GetParent(hwnd)), nullptr, TRUE);
+        return 0;
 
-	case WM_CLOCK_END_CLOCK:
-		endClock();
-		return 0;
-	}
+    case WM_CLOCK_END_CLOCK:
+        endClock();
+        return 0;
+    }
 
-	if(oldWndProc) {
-		return CallWindowProc(oldWndProc, hwnd, uMsg, wParam, lParam);
-	} else {
-		return DefWindowProc(hwnd, uMsg, wParam, lParam);
-	}
+    if(oldWndProc) {
+        return CallWindowProc(oldWndProc, hwnd, uMsg, wParam, lParam);
+    } else {
+        return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    }
 }
 
 } // Anonymous namespace
 
 
 LRESULT dllHookCallback(int nCode, WPARAM wParam, LPARAM lParam) {
-	const auto pcwps = reinterpret_cast<LPCWPSTRUCT>(lParam);
+    const auto pcwps = reinterpret_cast<LPCWPSTRUCT>(lParam);
 
-	// note : bExiting is flag which prevents re-installing
-	//        the hook during termination procedure (endClock()).
-	if(    nCode >= 0
-		&& !bExiting
-		&& nullptr == oldWndProc
-		&& pcwps
-		&& pcwps->hwnd
-		&& checkWindowClassName(pcwps->hwnd, _T("TrayClockWClass"))
-	) {
-		const auto h = pcwps->hwnd;
-		SharedVariable tmpSv {};
+    // note : bExiting is flag which prevents re-installing
+    //        the hook during termination procedure (endClock()).
+    if(    nCode >= 0
+        && !bExiting
+        && nullptr == oldWndProc
+        && pcwps
+        && pcwps->hwnd
+        && checkWindowClassName(pcwps->hwnd, _T("TrayClockWClass"))
+    ) {
+        const auto h = pcwps->hwnd;
+        SharedVariable tmpSv {};
 
-		bool b = false;
-		accessSharedVariable([&](SharedVariable& sv) {
-			sv.hwndClock = h;
-			tmpSv = sv;
-			b = true;
-		});
+        bool b = false;
+        accessSharedVariable([&](SharedVariable& sv) {
+            sv.hwndClock = h;
+            tmpSv = sv;
+            b = true;
+        });
 
-		if(b) {
-			hwndClock	= h;
-			hHook		= tmpSv.hHook;
-			hwndMain	= tmpSv.hwndMain;
+        if(b) {
+            hwndClock   = h;
+            hHook       = tmpSv.hHook;
+            hwndMain    = tmpSv.hwndMain;
 
-			if(hwndMain && hHook) {
-				postMessage(hwndMain, WM_DLL_TO_MAINWND_REGISTER_HWND, 0, h);
-				oldWndProc = getWindowLongPtr<WNDPROC>(h, GWLP_WNDPROC);
-				setWindowLongPtr(h, GWLP_WNDPROC, wndProc);
-				SetClassLong(h, GCL_STYLE, GetClassLong(h, GCL_STYLE) & ~CS_DBLCLKS);
+            if(hwndMain && hHook) {
+                postMessage(hwndMain, WM_DLL_TO_MAINWND_REGISTER_HWND, 0, h);
+                oldWndProc = getWindowLongPtr<WNDPROC>(h, GWLP_WNDPROC);
+                setWindowLongPtr(h, GWLP_WNDPROC, wndProc);
+                SetClassLong(h, GCL_STYLE, GetClassLong(h, GCL_STYLE) & ~CS_DBLCLKS);
 
-				const auto pph = GetParent(GetParent(h));
-				postMessage(pph, WM_SIZE, SIZE_RESTORED);
-				InvalidateRect(pph, nullptr, TRUE);
+                const auto pph = GetParent(GetParent(h));
+                postMessage(pph, WM_SIZE, SIZE_RESTORED);
+                InvalidateRect(pph, nullptr, TRUE);
 
-				postMessage(h, WM_CLOCK_REFRESH_CLOCK);
-				postMessage(h, WM_CLOCK_REFRESH_TASKBAR);
-			}
-		}
-	}
+                postMessage(h, WM_CLOCK_REFRESH_CLOCK);
+                postMessage(h, WM_CLOCK_REFRESH_TASKBAR);
+            }
+        }
+    }
 
-	return CallNextHookEx(hHook, nCode, wParam, lParam);
+    return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
