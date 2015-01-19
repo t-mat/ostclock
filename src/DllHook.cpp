@@ -7,6 +7,7 @@
 #include "WinMain.h"
 #include "DllMain.h"
 #include "DllHook.h"
+#include "SharedVariable.h"
 #include "Util.h"
 #include "TaskbarMessage.h"
 
@@ -25,6 +26,8 @@ WNDPROC oldWndProc { nullptr };
 HHOOK   hHook { nullptr };
 HWND    hwndClock { nullptr };
 HWND    hwndMain { nullptr };
+TCHAR   mainExePath[MAX_PATH + 1] {};
+
 int     iClockWidth { -1 };
 bool    bExiting { false };
 
@@ -393,6 +396,7 @@ LRESULT dllHookCallback(int nCode, WPARAM wParam, LPARAM lParam) {
             hwndClock   = h;
             hHook       = tmpSv.hHook;
             hwndMain    = tmpSv.hwndMain;
+            _tcscpy_s(mainExePath, tmpSv.mainExePath);
 
             if(hwndMain && hHook) {
                 postMessage(hwndMain, WM_DLL_TO_MAINWND_REGISTER_HWND, 0, h);

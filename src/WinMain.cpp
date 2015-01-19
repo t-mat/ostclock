@@ -8,6 +8,7 @@
 #include "DllMain.h"
 #include "Util.h"
 #include "PropertySheet.h"
+#include "SharedVariable.h"
 #include "WinMain.h"
 
 #pragma comment(lib, "comctl32.lib")
@@ -220,6 +221,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     }
 
     FileMapping fileMapping { APP_SHARED_MEMORY_NAME, sizeof(SharedVariable) };
+    {
+        TCHAR buf[MAX_PATH + 1] {};
+        GetModuleFileName(nullptr, buf, _countof(buf));
+        accessSharedVariable([&](SharedVariable& sv) {
+            _tcscpy_s(sv.mainExePath, buf);
+        });
+    }
 
     dllLoader.load(dllFilename);
     dllLoader.getProcAddress(hookStart, "HookStart");

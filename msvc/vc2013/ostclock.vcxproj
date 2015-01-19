@@ -163,6 +163,7 @@
     <ClInclude Include="..\..\src\PropertySheetPageColor.h" />
     <ClInclude Include="..\..\src\Registry.h" />
     <ClInclude Include="..\..\src\ResourcelessDialog.h" />
+    <ClInclude Include="..\..\src\SharedVariable.h" />
     <ClInclude Include="..\..\src\stdafx.h" />
     <ClInclude Include="..\..\src\TaskbarMessage.h" />
     <ClInclude Include="..\..\src\Timer.h" />
@@ -177,6 +178,7 @@
     <ClCompile Include="..\..\src\OutputDebugString.cpp" />
     <ClCompile Include="..\..\src\PropertySheet.cpp" />
     <ClCompile Include="..\..\src\PropertySheetPageColor.cpp" />
+    <ClCompile Include="..\..\src\SharedVariable.cpp" />
     <ClCompile Include="..\..\src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

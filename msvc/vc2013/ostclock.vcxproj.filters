@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\src\WinMain.h" />
     <ClInclude Include="..\..\src\ostclock.h" />
     <ClInclude Include="..\..\src\Config.h" />
+    <ClInclude Include="..\..\src\SharedVariable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\DateTimeFormat.cpp" />
@@ -32,5 +33,6 @@
     <ClCompile Include="..\..\src\Util.cpp" />
     <ClCompile Include="..\..\src\WinMain.cpp" />
     <ClCompile Include="..\..\src\Config.cpp" />
+    <ClCompile Include="..\..\src\SharedVariable.cpp" />
   </ItemGroup>
 </Project>

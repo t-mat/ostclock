@@ -8,13 +8,4 @@
 extern "C" void DLL_MAIN_DECLSPEC WINAPI HookEnd();
 extern "C" void DLL_MAIN_DECLSPEC WINAPI HookStart(HWND hwndMain, HINSTANCE hModule);
 
-struct SharedVariable {
-    HWND    hwndMain { nullptr };
-    HHOOK   hHook { nullptr };
-    HWND    hwndClock { nullptr };
-};
-
-using AccessSharedVariableFunc = std::function<void(SharedVariable&)>;
-bool accessSharedVariable(const AccessSharedVariableFunc& func);
-
 #endif

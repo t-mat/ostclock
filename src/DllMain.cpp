@@ -3,7 +3,7 @@
 #include "DllMain.h"
 #include "DllHook.h"
 #include "WinMain.h"
-#include "FileMapping.h"
+#include "SharedVariable.h"
 #include "Util.h"
 
 #pragma comment(lib, "UxTheme.lib")
@@ -84,24 +84,4 @@ extern "C" __declspec(dllexport) void WINAPI HookEnd() {
         postMessage(h, WM_SIZE, SIZE_RESTORED);
         InvalidateRect(h, nullptr, TRUE);
     }
-}
-
-
-// note : This function is called both T-Clock and Explore's process.
-//        Callers are HookStart(), HookEnd(), dllHookCallback().
-//
-bool accessSharedVariable(const AccessSharedVariableFunc& func) {
-    bool result = false;
-
-    FileMapping::access(
-          APP_SHARED_MEMORY_NAME
-        , sizeof(SharedVariable)
-        , [&](void* ptr, size_t) {
-            auto* p = reinterpret_cast<SharedVariable*>(ptr);
-            func(*p);
-            result = true;
-        }
-    );
-
-    return result;
 }
