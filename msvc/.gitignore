@@ -9,6 +9,7 @@
 *.pdb
 *.sdf
 *.suo
+*.user
 
 ostclock/
 ostclock_dll/
