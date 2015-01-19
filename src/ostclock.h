@@ -13,6 +13,7 @@
 #endif
 
 #define NOMINMAX
+#pragma warning(disable : 4351)
 #pragma warning(disable : 4822)
 
 #define WIN32_LEAN_AND_MEAN
