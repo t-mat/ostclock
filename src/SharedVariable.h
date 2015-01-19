@@ -5,7 +5,7 @@ struct SharedVariable {
     HWND    hwndMain { nullptr };
     HHOOK   hHook { nullptr };
     HWND    hwndClock { nullptr };
-    TCHAR   mainExePath[MAX_PATH + 1] {};
+    TCHAR   iniFilename[MAX_PATH + 1] {};
 };
 
 using AccessSharedVariableFunc = std::function<void(SharedVariable&)>;
