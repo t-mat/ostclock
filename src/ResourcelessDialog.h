@@ -41,11 +41,14 @@ namespace ResourcelessDialogTypes {
 
 class ResourcelessDialog {
 public:
-    using WalkerFunc = std::function<void(int type, DLGITEMTEMPLATE& t, const wchar_t* caption, const wchar_t* componentName)>;
-
     ResourcelessDialog() {}
 
-    ResourcelessDialog(const DLGTEMPLATE& dt, LPCTSTR caption = nullptr, LPCTSTR font = nullptr, int fontSize = 8) {
+    ResourcelessDialog(
+          const DLGTEMPLATE& dt
+        , LPCTSTR caption = nullptr
+        , LPCTSTR font = nullptr
+        , int fontSize = 8
+    ) {
         set(dt, caption, font, fontSize);
     }
 
@@ -77,7 +80,11 @@ public:
         return dlgProc;
     }
 
-    void set(LPCTSTR caption = nullptr, LPCTSTR font = nullptr, int fontSize = 8) {
+    void set(
+          LPCTSTR caption = nullptr
+        , LPCTSTR font = nullptr
+        , int fontSize = 8
+    ) {
         DLGTEMPLATE dt {};
         dt.style    = WS_CAPTION;
         dt.cx       = 640;
@@ -85,7 +92,12 @@ public:
         set(dt, caption, font, fontSize);
     }
 
-    void set(const DLGTEMPLATE& dt, LPCTSTR caption = nullptr, LPCTSTR font = nullptr, int fontSize = 8) {
+    void set(
+          const DLGTEMPLATE& dt
+        , LPCTSTR caption = nullptr
+        , LPCTSTR font = nullptr
+        , int fontSize = 8
+    ) {
         reset();
 
         buffer.append(dt);
@@ -121,6 +133,7 @@ public:
             switch(type) {
             default:
             case TYPE_UNKNOWN:                                              break;
+            case TYPE_GROUPBOX:
             case TYPE_PUSHBUTTON:   addStdComponent0(0x0080, t, caption);   break;
             case TYPE_EDITTEXT:     addStdComponent0(0x0081, t, caption);   break;
             case TYPE_TEXT:         addStdComponent0(0x0082, t, caption);   break;
@@ -131,7 +144,11 @@ public:
         }
     }
 
-    void addComponent(LPCTSTR componentName, const DLGITEMTEMPLATE& t, LPCTSTR caption = _T("")) {
+    void addComponent(
+          LPCTSTR componentName
+        , const DLGITEMTEMPLATE& t
+        , LPCTSTR caption = _T("")
+    ) {
         if(!good()) {
             return;
         }
@@ -144,33 +161,20 @@ public:
         incDlgTemplateCdit();
     }
 
-    static DLGITEMTEMPLATE makeItem(DWORD style, DWORD exStyle, int x, int y, int w, int h, int id) {
+    template <
+        class T0, class T1, class T2, class T3, class T4, class T5, class T6
+    > static DLGITEMTEMPLATE makeItem(
+        T0 style, T1 dwExtendedStyle, T2 x, T3 y, T4 w, T5 h, T6 id
+    ) {
         return {
-              style
-            , exStyle
+              static_cast<decltype(DLGITEMTEMPLATE::style)>(style)
+            , static_cast<decltype(DLGITEMTEMPLATE::dwExtendedStyle)>(dwExtendedStyle)
             , static_cast<decltype(DLGITEMTEMPLATE::x)>(x)
             , static_cast<decltype(DLGITEMTEMPLATE::y)>(y)
             , static_cast<decltype(DLGITEMTEMPLATE::cx)>(w)
             , static_cast<decltype(DLGITEMTEMPLATE::cy)>(h)
             , static_cast<decltype(DLGITEMTEMPLATE::id)>(id)
         };
-    }
-
-    static int componentNameToType(const wchar_t* componentName) {
-        using namespace ResourcelessDialogTypes;
-
-        int type = TYPE_UNKNOWN;
-        const auto& cmp = [componentName](const wchar_t* s) {
-            return 0 == wcscmp(componentName, s);
-        };
-        if(cmp(WC_BUTTON)) {
-            type = TYPE_CTRL_BUTTON;
-        } else if(cmp(UPDOWN_CLASS)) {
-            type = TYPE_CTRL_UPDOWN;
-        } else if(cmp(PROGRESS_CLASS)) {
-            type = TYPE_CTRL_PROGRESS;
-        }
-        return type;
     }
 
     static const wchar_t* componentTypeToName(int type) {
@@ -186,6 +190,59 @@ public:
         return s;
     }
 
+    static bool typeHasTabStop(int type) {
+        using namespace ResourcelessDialogTypes;
+
+        bool r = true;
+
+        switch(type) {
+        default:
+            r = true;
+            break;
+
+        case TYPE_TEXT:
+        case TYPE_GROUPBOX:
+        case TYPE_CTRL_UPDOWN:
+            r = false;
+            break;
+        }
+
+        return r;
+    }
+
+    static DWORD typeDefaultStyle(int type) {
+        using namespace ResourcelessDialogTypes;
+
+        DWORD r = 0;
+
+        switch(type) {
+        default:
+            break;
+
+        case TYPE_EDITTEXT:
+            r = WS_BORDER;
+            break;
+
+        case TYPE_GROUPBOX:
+            r = BS_GROUPBOX;
+            break;
+
+        case TYPE_COMBOBOX:
+            r = CBS_DROPDOWNLIST | WS_VSCROLL;
+            break;
+
+        case TYPE_CTRL_UPDOWN:
+            r =   UDS_WRAP
+                | UDS_ALIGNRIGHT
+                | UDS_SETBUDDYINT
+                | UDS_AUTOBUDDY
+                | UDS_ARROWKEYS;
+            break;
+        }
+
+        return r;
+    }
+
     void maskDlgTemplateStyle(DWORD orValue, DWORD andValue = ~0) {
         if(auto* p = get()) {
             p->style &= andValue;
@@ -193,13 +250,8 @@ public:
         }
     }
 
-    void foreachComponent(const WalkerFunc& func) {
-        foreachComponent(get(), func);
-    }
-
     struct Data {
         int             type;
-    //  const TCHAR*    controlName;
         const TCHAR*    text;
         WORD            id;
         WORD            x;
@@ -211,8 +263,15 @@ public:
     };
 
     template<class T>
-//  static ResourcelessDialog create(const std::vector<Data>& datas, const TCHAR* caption, const TCHAR* font, int fontSize, DLGPROC dlgProc) {
-    static ResourcelessDialog create(const T& datas, const TCHAR* caption, const TCHAR* font, int fontSize, DLGPROC dlgProc) {
+    static ResourcelessDialog create(
+          const T& datas
+        , DLGPROC dlgProc
+        , const TCHAR* caption = nullptr
+        , const TCHAR* font = nullptr
+        , int fontSize = 8
+        , int marginX = 8
+        , int marginY = 8
+    ) {
         using namespace ResourcelessDialogTypes;
 
         ResourcelessDialog rd {};
@@ -220,151 +279,45 @@ public:
         DLGTEMPLATE dt {};
         dt.style = DS_SETFONT | WS_CHILD | WS_DISABLED | WS_CAPTION;
 
-        WORD ofsX {};
-        WORD ofsY {};
+        int ofsX {};
+        int ofsY {};
         {
-            WORD minX = 32767;
-            WORD minY = 32767;
-            WORD maxX = 0;
-            WORD maxY = 0;
+            int minX = SHRT_MAX;
+            int minY = SHRT_MAX;
+            int maxX = 0;
+            int maxY = 0;
             for(const auto& d : datas) {
-                minX = std::min<WORD>(minX, d.x);
-                minY = std::min<WORD>(minY, d.y);
-                maxX = std::max<WORD>(maxX, d.x + d.w);
-                maxY = std::max<WORD>(maxY, d.y + d.h);
+                minX = std::min<int>(minX, d.x);
+                minY = std::min<int>(minY, d.y);
+                maxX = std::max<int>(maxX, d.x + d.w);
+                maxY = std::max<int>(maxY, d.y + d.h);
             }
 
-            const WORD marginLeft   = 8;
-            const WORD marginRight  = 8;
-            const WORD marginTop    = 8;
-            const WORD marginBottom = 8;
-
-            ofsX    = -minX + marginLeft;
-            ofsY    = -minY + marginTop;
-            dt.cx   = maxX - minX + marginLeft + marginRight;
-            dt.cy   = maxY - minY + marginTop  + marginBottom;
+            ofsX    = -minX + marginX;
+            ofsY    = -minY + marginY;
+            dt.cx   = static_cast<decltype(dt.cx)>(maxX - minX + marginX * 2);
+            dt.cy   = static_cast<decltype(dt.cy)>(maxY - minY + marginY * 2);
         }
 
-//      const TCHAR*    caption     = _T("Clock Text");
-//      const TCHAR*    font        = _T("MS Sans Serif");
-//      const int       fontSize    = 8;
         rd.set(dt, caption, font, fontSize);
         rd.setDlgProc(dlgProc);
 
-        for(auto d : datas) {
-            auto st = d.style | WS_VISIBLE;
-            auto es = d.exStyle;
+        for(const auto& d : datas) {
+            auto item = rd.makeItem(d.style, d.exStyle, d.x, d.y, d.w, d.h, d.id);
 
-            d.x += ofsX;
-            d.y += ofsY;
+            item.x += static_cast<decltype(item.x)>(ofsX);
+            item.y += static_cast<decltype(item.y)>(ofsY);
 
-            const bool tabStop = [&]() {
-                switch(d.type) {
-                default:
-                    break;
-                case TYPE_TEXT:
-                case TYPE_GROUPBOX:
-                case TYPE_CTRL_UPDOWN:
-//              case TYPE_CONTROL:
-                    return false;
-                }
-                return true;
-            }();
-            if(tabStop) {
-                st |= WS_TABSTOP;
-            }
+            item.style |=
+                  WS_VISIBLE
+                | typeDefaultStyle(d.type)
+                | (typeHasTabStop(d.type) ? WS_TABSTOP : 0);
 
-            switch(d.type) {
-            default:
-                break;
-            case TYPE_TEXT:
-                rd.add(TYPE_TEXT, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            case TYPE_PUSHBUTTON:
-                rd.add(TYPE_PUSHBUTTON, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            case TYPE_COMBOBOX:
-                st |= CBS_DROPDOWNLIST | WS_VSCROLL;
-                rd.add(TYPE_COMBOBOX, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            case TYPE_EDITTEXT:
-                st |= WS_BORDER;
-                rd.add(TYPE_EDITTEXT, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-    //      case TYPE_CONTROL:
-    //          rd.addComponent(d.controlName, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-    //          break;
-            case TYPE_GROUPBOX:
-                st |= BS_GROUPBOX;
-                rd.add(TYPE_PUSHBUTTON, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            case TYPE_CTRL_BUTTON:
-                rd.add(TYPE_CTRL_BUTTON, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            case TYPE_CTRL_UPDOWN:
-                st |= UDS_WRAP | UDS_ALIGNRIGHT | UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS;
-                rd.add(TYPE_CTRL_UPDOWN, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            case TYPE_CTRL_PROGRESS:
-                rd.add(TYPE_CTRL_PROGRESS, rd.makeItem(st, es, d.x, d.y, d.w, d.h, d.id), d.text);
-                break;
-            }
+            rd.add(d.type, item, d.text);
         }
 
         return rd;
     }
-
-    static void foreachComponent(DLGTEMPLATE* dlgTemplate, const WalkerFunc& func) {
-        using namespace ResourcelessDialogTypes;
-
-        if(! dlgTemplate) {
-            return;
-        }
-
-        auto* top = reinterpret_cast<char*>(dlgTemplate);
-        const auto nComponent = dlgTemplate->cdit;
-        size_t ofs = sizeof(*dlgTemplate);
-        for(int iComponent = 0; iComponent < nComponent; ++iComponent) {
-            if(const auto a = ofs % sizeof(DWORD)) {
-                ofs += a;
-            }
-
-            int type = TYPE_UNKNOWN;
-            auto* dlgItemTemplate = reinterpret_cast<DLGITEMTEMPLATE*>(top + ofs);
-            const wchar_t* caption = nullptr;
-            const wchar_t* componentName = nullptr;
-
-            {
-                ofs += sizeof(DLGITEMTEMPLATE);
-                auto* p0 = reinterpret_cast<WORD*>(top + ofs);
-                if(*p0 == 0xffff) {
-                    // Standard component
-                    switch(p0[1]) {
-                    default:    break;
-                    case 0x0080: type = TYPE_PUSHBUTTON;    break;
-                    case 0x0081: type = TYPE_EDITTEXT;      break;
-                    case 0x0082: type = TYPE_TEXT;          break;
-                    case 0x0083: type = TYPE_LISTBOX;       break;
-                    case 0x0084: type = TYPE_SCROLLBAR;     break;
-                    case 0x0085: type = TYPE_COMBOBOX;      break;
-                    }
-                    ofs += sizeof(WORD) * 2;
-                } else {
-                    componentName = reinterpret_cast<wchar_t*>(top + ofs);
-                    const auto componentNameBytes = (wcslen(componentName) + 1) * sizeof(wchar_t);
-                    ofs += componentNameBytes;
-                    type = componentNameToType(componentName);
-                }
-
-                caption = reinterpret_cast<wchar_t*>(top + ofs);
-                const auto captionBytes = (wcslen(caption) + 1) * sizeof(wchar_t);
-                ofs += captionBytes;
-                ofs += sizeof(WORD);    // tail 0
-            }
-            func(type, *dlgItemTemplate, caption, componentName);
-        }
-    }
-
 
     static HWND propertySheet(
           const std::vector<ResourcelessDialog>& resourcelessDialogs
@@ -387,7 +340,6 @@ public:
         return reinterpret_cast<HWND>(PropertySheet(&psh));
     }
 
-
     static HWND propertySheet(
           const std::vector<ResourcelessDialog>& resourcelessDialogs
         , const TCHAR* caption
@@ -409,7 +361,6 @@ public:
 
         return propertySheet(resourcelessDialogs, psh);
     }
-
 
 protected:
     void addStdComponent0(WORD type, const DLGITEMTEMPLATE& t, LPCTSTR caption) {

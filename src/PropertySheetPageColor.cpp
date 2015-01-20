@@ -1,5 +1,4 @@
 ﻿#include "stdafx.h"
-#include "Registry.h"
 #include "Config.h"
 #include "Font.h"
 #include "ResourcelessDialog.h"
@@ -523,10 +522,10 @@ colorDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 ResourcelessDialog createColorDlg() {
     auto rd = ResourcelessDialog::create(
           widgets
+        , colorDlgProc
         , _T("Clock Text")
         , _T("MS Sans Serif")
         , 8
-        , colorDlgProc
     );
     rd.maskDlgTemplateStyle(DS_SHELLFONT | WS_CHILD);
     return rd;
