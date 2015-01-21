@@ -3,8 +3,7 @@
 #include "FileMapping.h"
 
 
-// note : This function is called both T-Clock and Explore's process.
-//        Callers are HookStart(), HookEnd(), dllHookCallback().
+// note : This function is called both TClock and Explore's process.
 //
 bool accessSharedVariable(const AccessSharedVariableFunc& func) {
     bool result = false;

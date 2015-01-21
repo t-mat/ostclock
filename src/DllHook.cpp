@@ -355,14 +355,10 @@ LRESULT dllHookCallback(int nCode, WPARAM wParam, LPARAM lParam) {
         const auto h = pcwps->hwnd;
         SharedVariable tmpSv {};
 
-        bool b = false;
-        accessSharedVariable([&](SharedVariable& sv) {
-            sv.hwndClock = h;
+        if(accessSharedVariable([&](SharedVariable& sv) {
             tmpSv = sv;
-            b = true;
-        });
-
-        if(b) {
+            sv.hwndClock = h;
+        })) {
             hwndClock   = h;
             hHook       = tmpSv.hHook;
             hwndMain    = tmpSv.hwndMain;

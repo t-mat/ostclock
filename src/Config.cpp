@@ -78,11 +78,12 @@ struct IniFile {
     IniFile()
         : section(_T("Settings"))
     {
-        accessSharedVariable([&](SharedVariable& sv) {
+        if(accessSharedVariable([&](const SharedVariable& sv) {
             _tcscpy_s(iniFilename, sv.iniFilename);
-        });
-        if(iniFilename[0]) {
-            uif.load(iniFilename);
+        })) {
+            if(iniFilename[0]) {
+                uif.load(iniFilename);
+            }
         }
     }
 

@@ -62,16 +62,12 @@ extern "C" __declspec(dllexport) void WINAPI HookEnd() {
     //
     // See HookStart() for the details.
 
-    bool b = false;
     SharedVariable tmpSv {};
-    accessSharedVariable([&](SharedVariable& sv) {
+    if(accessSharedVariable([&](SharedVariable& sv) {
         tmpSv = sv;
         sv.hwndClock = nullptr;
         sv.hHook = nullptr;
-        b = true;
-    });
-
-    if(b) {
+    })) {
         // note : Unhook first !
         //        Until unhooked, dllHookCallback() is always watching
         //        Main window and taskbar.
