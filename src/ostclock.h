@@ -6,7 +6,8 @@
 #define APP_SHARED_MEMORY_NAME  _T(APPNAME) _T("SharedMemory")
 #ifdef NDEBUG
 #  define APP_DLL_NAME          "ostclock_dll.dll"
-#  define OUTPUT_DEBUG_STRING_ENABLE
+// In the release build, we do not output any debug strings.
+//#  define OUTPUT_DEBUG_STRING_ENABLE
 #else
 #  define APP_DLL_NAME          "ostclock_dll_debug.dll"
 #  define OUTPUT_DEBUG_STRING_ENABLE
