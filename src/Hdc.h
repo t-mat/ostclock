@@ -12,7 +12,7 @@ struct Hdc {
         this->hwndGetDc = hdc.hwndGetDc;
 
         hdc.gdiHdc = nullptr;
-        hdc.hwndGetDc = nullptr;
+        hdc.hwndGetDc = InvalidHwndValue;
     }
 
     ~Hdc() {
@@ -48,9 +48,9 @@ struct Hdc {
 
     void destroy() {
         if(gdiHdc) {
-            if(hwndGetDc) {
+            if(InvalidHwndValue != hwndGetDc) {
                 ReleaseDC(hwndGetDc, gdiHdc);
-                hwndGetDc = nullptr;
+                hwndGetDc = InvalidHwndValue;
             } else {
                 DeleteDC(gdiHdc);
             }
@@ -59,8 +59,10 @@ struct Hdc {
     }
 
 protected:
+    const HWND InvalidHwndValue = reinterpret_cast<HWND>(-1);
+
     HDC gdiHdc { nullptr };
-    HWND hwndGetDc { nullptr };
+    HWND hwndGetDc { InvalidHwndValue };
 };
 
 #endif
