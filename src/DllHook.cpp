@@ -2,6 +2,7 @@
 #include "DateTimeFormat.h"
 #include "Timer.h"
 #include "Font.h"
+#include "Bitmap.h"
 #include "Registry.h"
 #include "Config.h"
 #include "WinMain.h"
@@ -20,15 +21,14 @@ namespace {
 Config  config {};
 Timer   timer {};
 Font    font {};
+Bitmap  clockBitmap;
 HDC     hdcClock { nullptr };
-HBITMAP hbmpClock { nullptr };
 WNDPROC oldWndProc { nullptr };
 HHOOK   hHook { nullptr };
 HWND    hwndClock { nullptr };
 HWND    hwndMain { nullptr };
 
 int     iClockWidth { -1 };
-
 
 RECT getClientRect(HWND hWnd) {
     RECT rc;
@@ -104,10 +104,7 @@ void destroyClockDc() {
         hdcClock = nullptr;
     }
 
-    if(hbmpClock) {
-        DeleteObject(hbmpClock);
-        hbmpClock = nullptr;
-    }
+    clockBitmap.destroy();
 }
 
 
@@ -137,19 +134,13 @@ void endClock() {
 
 
 void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
-    if(!hdcClock || !hbmpClock) {
+    if(!hdcClock || !clockBitmap) {
         destroyClockDc();
         if(HDC hdc = GetDC(nullptr)) {
             hdcClock = CreateCompatibleDC(hdc);
             if(hdcClock) {
-                RECT rc = getClientRect(hwnd);
-                hbmpClock = CreateCompatibleBitmap(
-                      hdc
-                    , rc.right
-                    , rc.bottom
-                );
-                if(hbmpClock) {
-                    SelectObject(hdcClock, hbmpClock);
+                if(clockBitmap.create(hdc, getClientRect(hwnd))) {
+                    clockBitmap.select(hdcClock);
                     font.select(hdcClock);
                     SetBkMode   (hdcClock, TRANSPARENT);
                     SetTextAlign(hdcClock, TA_CENTER|TA_TOP);
@@ -160,11 +151,11 @@ void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
         }
     }
 
-    if(!hdcClock || !hbmpClock) {
+    if(!hdcClock || !clockBitmap) {
         return;
     }
 
-    auto bmp = getObject<BITMAP>(hbmpClock);
+    const auto bmp = clockBitmap.getBitmap();
 
     if(config.explore.isXpStyle) {
         DrawThemeParentBackground(hwnd, hdcClock, nullptr);
