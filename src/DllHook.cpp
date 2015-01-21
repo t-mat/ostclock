@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DateTimeFormat.h"
 #include "Timer.h"
+#include "Hdc.h"
 #include "Font.h"
 #include "Bitmap.h"
 #include "Registry.h"
@@ -22,7 +23,7 @@ Config  config {};
 Timer   timer {};
 Font    font {};
 Bitmap  clockBitmap;
-HDC     hdcClock { nullptr };
+Hdc     hdcClock;
 WNDPROC oldWndProc { nullptr };
 HHOOK   hHook { nullptr };
 HWND    hwndClock { nullptr };
@@ -99,11 +100,7 @@ POINT drawText(
 
 
 void destroyClockDc() {
-    if(hdcClock) {
-        DeleteDC(hdcClock);
-        hdcClock = nullptr;
-    }
-
+    hdcClock.destroy();
     clockBitmap.destroy();
 }
 
@@ -136,8 +133,8 @@ void endClock() {
 void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
     if(!hdcClock || !clockBitmap) {
         destroyClockDc();
-        if(HDC hdc = GetDC(nullptr)) {
-            hdcClock = CreateCompatibleDC(hdc);
+        if(auto hdc = Hdc::getDc(nullptr)) {
+            hdcClock.createCompatibleDc_(hdc);
             if(hdcClock) {
                 if(clockBitmap.create(hdc, getClientRect(hwnd))) {
                     clockBitmap.select(hdcClock);
@@ -147,7 +144,6 @@ void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
                     SetTextColor(hdcClock, config.text.color.foreground);
                 }
             }
-            ReleaseDC(nullptr, hdc);
         }
     }
 
@@ -194,9 +190,8 @@ void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
 void onTimer(HWND hwnd, WPARAM) {
     const auto t = getDisplayTime();
     timer.update(t);
-    if(HDC hdc = GetDC(hwnd)) {
+    if(auto hdc = Hdc::getDc(hwnd)) {
         drawClockSub(hwnd, hdc, t);
-        ReleaseDC(hwnd, hdc);
     }
 }
 
@@ -206,7 +201,7 @@ LRESULT onCalcRect(HWND hwnd, const SYSTEMTIME& pt) {
         return 0;
     }
 
-    if(HDC hdc = GetDC(hwnd)) {
+    if(auto hdc = Hdc::getDc(hwnd)) {
         font.select(hdc);
 
         auto f = makeDateTimeString(pt, config.text.format.data());
@@ -236,7 +231,6 @@ LRESULT onCalcRect(HWND hwnd, const SYSTEMTIME& pt) {
         w = std::max<int>(8, w);
         h = std::max<int>(8, h);
 
-        ReleaseDC(hwnd, hdc);
         return MAKELONG(w, h);
     }
 
