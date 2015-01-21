@@ -125,7 +125,9 @@ void endClock() {
         if(oldWndProc) {
             setWindowLongPtr(hwndClock, GWLP_WNDPROC, oldWndProc);
         }
-        oldWndProc = nullptr;
+        // note : Do not clear oldWndProc like this :
+        //           oldWndProc = nullptr;
+        //        oldWndProc has role as 'hook at once' flag in dllHookCallback().
     }
 
     if(isWindow(hwndMain)) {
