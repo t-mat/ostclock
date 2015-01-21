@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "Config.h"
+#include "Hdc.h"
 #include "Font.h"
 #include "ResourcelessDialog.h"
 #include "ComboBox.h"
@@ -82,7 +83,7 @@ const ResourcelessDialog::Data widgets[] = {
 
 void initComboFont(HWND hDlg, int iDlgItem) {
     {
-        HDC hdc = GetDC(nullptr);
+        auto hdc = Hdc::getDc(nullptr);
 
         const BYTE cs[] = {
               static_cast<BYTE>(GetTextCharset(hdc))
@@ -129,7 +130,6 @@ void initComboFont(HWND hDlg, int iDlgItem) {
                 return 1;
             });
         }
-        ReleaseDC(nullptr, hdc);
     }
 
     {
@@ -172,7 +172,7 @@ void setComboFontSize(
     cbResetContext(hDlg, iDlgItem);
 
     {
-        HDC hdc = GetDC(nullptr);
+        auto hdc = Hdc::getDc(nullptr);
 
         LOGFONT lf {};
         _tcscpy_s(lf.lfFaceName, faceName);
@@ -219,8 +219,6 @@ void setComboFontSize(
             sendMessage(hCombo, CB_ADDSTRING, 0, x.data());
             return TRUE;
         });
-
-        ReleaseDC(nullptr, hdc);
     }
 
     auto size = oldSize;

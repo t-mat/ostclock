@@ -1,6 +1,8 @@
 ﻿#ifndef FONT_H
 #define FONT_H
 
+#include "Hdc.h"
+
 struct Font {
     Font() {}
 
@@ -101,9 +103,9 @@ protected:
         , LONG italic
         , int angle
     ) {
-        const HDC hdc = GetDC(nullptr);
+        auto hdc = Hdc::getDc(nullptr);
 
-        const POINT pt = [hdc, fontSize]() {
+        const POINT pt = [&hdc, fontSize]() {
             POINT pt {};
             pt.x = 0;
             pt.y = MulDiv(fontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
@@ -141,7 +143,7 @@ protected:
             { 1257, BALTIC_CHARSET },
         };
 
-        const BYTE charSet = [hdc, cp]() -> BYTE {
+        const BYTE charSet = [&hdc, cp]() -> BYTE {
             auto c = static_cast<BYTE>(GetTextCharset(hdc));
             for(const auto& cpcs : codePageCharSets) {
                 if(cp == cpcs.cp) {
@@ -197,7 +199,6 @@ protected:
             return lf;
         }();
 
-        ReleaseDC(nullptr, hdc);
         return CreateFontIndirect(&logFont);
     }
 
