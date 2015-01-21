@@ -72,11 +72,14 @@ extern "C" __declspec(dllexport) void WINAPI HookEnd() {
     });
 
     if(b) {
-        if(isWindow(tmpSv.hwndClock)) {
-            postMessage(tmpSv.hwndClock, WM_CLOCK_END_CLOCK);
-        }
+        // note : Unhook first !
+        //        Until unhooked, dllHookCallback() is always watching
+        //        Main window and taskbar.
         if(tmpSv.hHook) {
             UnhookWindowsHookEx(tmpSv.hHook);
+        }
+        if(isWindow(tmpSv.hwndClock)) {
+            postMessage(tmpSv.hwndClock, WM_CLOCK_END_CLOCK);
         }
     }
 

@@ -28,7 +28,6 @@ HWND    hwndClock { nullptr };
 HWND    hwndMain { nullptr };
 
 int     iClockWidth { -1 };
-bool    bExiting { false };
 
 
 RECT getClientRect(HWND hWnd) {
@@ -120,7 +119,6 @@ void deleteClockRes() {
 
 
 void endClock() {
-    bExiting = true;
     deleteClockRes();
 
     if(isWindow(hwndClock)) {
@@ -361,10 +359,7 @@ wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 LRESULT dllHookCallback(int nCode, WPARAM wParam, LPARAM lParam) {
     const auto pcwps = reinterpret_cast<LPCWPSTRUCT>(lParam);
 
-    // note : bExiting is flag which prevents re-installing
-    //        the hook during termination procedure (endClock()).
     if(    nCode >= 0
-        && !bExiting
         && nullptr == oldWndProc
         && pcwps
         && pcwps->hwnd
