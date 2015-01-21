@@ -79,6 +79,9 @@ extern "C" __declspec(dllexport) void WINAPI HookEnd() {
             UnhookWindowsHookEx(tmpSv.hHook);
         }
         if(isWindow(tmpSv.hwndClock)) {
+            // Call endClock(). But, since we can't call endClock() directly,
+            // we should send message to the clock window which is running
+            // in the Windows Explore process.
             postMessage(tmpSv.hwndClock, WM_CLOCK_END_CLOCK);
         }
     }
