@@ -4,8 +4,6 @@
 #include "SharedVariable.h"
 #include "UnicodeIniFile.h"
 
-#define USE_INI_FILE
-
 namespace {
 
 const TCHAR myKey[] = _T(APP_REGKEY);
@@ -29,88 +27,108 @@ void dump(const Config& config) {
 }
 
 
-template<typename T = int, typename U = int>
-T getRegLong(const TCHAR* subKey, U defaultVal = (U)0) {
-    return getRegDword<T>(HKEY_CURRENT_USER, myKey, subKey, defaultVal);
+Config loadConfig1(
+      const std::function<int (const TCHAR*, int)>& getInt
+    , const std::function<std::wstring (const TCHAR*, const TCHAR*)>& getStr
+) {
+    Config config;
+
+    config.text.width               = getInt(_T("Width"), 0);
+    config.text.height              = getInt(_T("Height"), 0);
+    config.text.xPos                = getInt(_T("Xpos"), 0);
+    config.text.yPos                = getInt(_T("Ypos"), 0);
+    config.text.lineSpacing         = getInt(_T("LineSpacing"), 0);
+    config.text.color.foreground    = getInt(_T("ForegroundColor"), GetSysColor(COLOR_BTNTEXT));
+    config.text.color.background    = getInt(_T("BackgroundColor"), GetSysColor(COLOR_3DFACE));
+    config.text.format              = getStr(_T("Format"), _T("%H:%M:%S"));
+    config.font.name                = getStr(_T("FontName"), _T(""));
+    config.font.size                = getInt(_T("FontSize"), 10);
+    config.font.italic              = getInt(_T("FontItalic"), 0);
+    config.font.bold                = getInt(_T("FontBold"), 1);
+    config.font.langId              = getInt(_T("FontLocale"), GetUserDefaultLangID());
+    config.font.quality             = getInt(_T("FontQuality"), ANTIALIASED_QUALITY);
+
+    return config;
+}
+
+
+void saveConfig1(
+      const Config& config
+    , const std::function<void(const TCHAR*, int)>& setInt
+    , const std::function<void(const TCHAR*, const TCHAR*)>& setStr
+) {
+    setInt(_T("Width")              , config.text.width);
+    setInt(_T("Height")             , config.text.height);
+    setInt(_T("Xpos")               , config.text.xPos);
+    setInt(_T("Ypos")               , config.text.yPos);
+    setInt(_T("LineSpacing")        , config.text.lineSpacing);
+    setInt(_T("ForegroundColor")    , config.text.color.foreground);
+    setInt(_T("BackgroundColor")    , config.text.color.background);
+    setStr(_T("Format")             , config.text.format.c_str());
+    setStr(_T("FontName")           , config.font.name.c_str());
+    setInt(_T("FontSize")           , config.font.size);
+    setInt(_T("FontItalic")         , config.font.italic);
+    setInt(_T("FontBold")           , config.font.bold);
+    setInt(_T("FontLocale")         , config.font.langId);
+    setInt(_T("FontQuality")        , config.font.quality);
+}
+
+
+struct IniFile {
+    IniFile()
+        : section(_T("Settings"))
+    {
+        accessSharedVariable([&](SharedVariable& sv) {
+            _tcscpy_s(iniFilename, sv.iniFilename);
+        });
+        if(iniFilename[0]) {
+            uif.load(iniFilename);
+        }
+    }
+
+    IniFile(const IniFile&) = delete;
+    IniFile& operator=(const IniFile&) = delete;
+
+    void save() {
+        uif.save(iniFilename);
+    }
+
+    UnicodeIniFile uif {};
+    TCHAR iniFilename[MAX_PATH+1] {};
+    const std::wstring section;
 };
-
-
-std::wstring getRegStr(const TCHAR* subKey, const TCHAR* defaultVal = _T("")) {
-    return getRegStr(HKEY_CURRENT_USER, myKey, subKey, defaultVal);
-};
-
-
-template<typename T = int>
-void setRegLong(const TCHAR* subKey, T val) {
-    setRegDword(HKEY_CURRENT_USER, myKey, subKey, val);
-};
-
-
-void setRegStr(const TCHAR* subKey, const TCHAR* val) {
-    setRegStr(HKEY_CURRENT_USER, myKey, subKey, val);
-};
-
 
 } // Anonymous namespace
 
 
-Config loadConfig() {
+Config loadConfig(bool useIniFile) {
     Config config;
 
-#if defined(USE_INI_FILE)
-    TCHAR iniFilename[MAX_PATH+1] {};
-    accessSharedVariable([&](SharedVariable& sv) {
-        _tcscpy_s(iniFilename, sv.iniFilename);
-    });
+    if(useIniFile) {
+        IniFile iniFile {};
 
-    const std::wstring section = _T("Settings");
-
-    UnicodeIniFile uif {};
-
-    if(iniFilename[0]) {
-        uif.load(iniFilename);
+        config = loadConfig1(
+              [&](const TCHAR* key, int defaultVal) {
+                auto val = iniFile.uif.getInt(iniFile.section, key, defaultVal);
+                return val;
+            }
+            , [&](const TCHAR* key, const TCHAR* defaultVal) {
+                auto val = iniFile.uif.getString(iniFile.section, key, defaultVal);
+                return val;
+            }
+        );
+    } else {
+        config = loadConfig1(
+              [&](const TCHAR* key, int defaultVal) {
+                auto val = getRegDword<int>(HKEY_CURRENT_USER, myKey, key, defaultVal);
+                return val;
+            }
+            , [&](const TCHAR* key, const TCHAR* defaultVal) {
+                auto val = getRegStr(HKEY_CURRENT_USER, myKey, key, defaultVal);
+                return val;
+            }
+        );
     }
-
-    const auto& getIniLong = [&](const TCHAR* key, int defaultVal) {
-        auto val = uif.getInt(section, key, defaultVal);
-        return val;
-    };
-
-    const auto& getIniStr = [&](const TCHAR* key, const TCHAR* defaultVal) {
-        auto val = uif.getString(section, key, defaultVal);
-        return val;
-    };
-
-    config.text.width               = getIniLong(_T("Width"), 0);
-    config.text.height              = getIniLong(_T("Height"), 0);
-    config.text.xPos                = getIniLong(_T("Xpos"), 0);
-    config.text.yPos                = getIniLong(_T("Ypos"), 0);
-    config.text.lineSpacing         = getIniLong(_T("LineSpacing"), 0);
-    config.text.color.foreground    = getIniLong(_T("ForegroundColor"), GetSysColor(COLOR_BTNTEXT));
-    config.text.color.background    = getIniLong(_T("BackgroundColor"), GetSysColor(COLOR_3DFACE));
-    config.text.format              = getIniStr (_T("Format"), _T("%H:%M:%S"));
-    config.font.name                = getIniStr (_T("FontName"), _T(""));
-    config.font.size                = getIniLong(_T("FontSize"), 10);
-    config.font.italic              = getIniLong(_T("FontItalic"), 0);
-    config.font.bold                = getIniLong(_T("FontBold"), 1);
-    config.font.langId              = getIniLong(_T("FontLocale"), GetUserDefaultLangID());
-    config.font.quality             = getIniLong(_T("FontQuality"), ANTIALIASED_QUALITY);
-#else
-    config.text.width               = getRegLong(_T("Width"));
-    config.text.height              = getRegLong(_T("Height"));
-    config.text.xPos                = getRegLong(_T("Xpos"));
-    config.text.yPos                = getRegLong(_T("Ypos"));
-    config.text.lineSpacing         = getRegLong(_T("LineSpacing"));
-    config.text.color.foreground    = getRegLong(_T("ForegroundColor"), GetSysColor(COLOR_BTNTEXT));
-    config.text.color.background    = getRegLong(_T("BackgroundColor"), GetSysColor(COLOR_3DFACE));
-    config.text.format              = getRegStr (_T("Format"), _T("%H:%M:%S"));
-    config.font.name                = getRegStr (_T("FontName"));
-    config.font.size                = getRegLong(_T("FontSize"), 10);
-    config.font.italic              = getRegLong(_T("FontItalic"));
-    config.font.bold                = getRegLong(_T("FontBold"), 1);
-    config.font.langId              = getRegLong(_T("FontLocale"), GetUserDefaultLangID());
-    config.font.quality             = getRegLong(_T("FontQuality"), ANTIALIASED_QUALITY);
-#endif
 
     {
         const auto t = getRegStr(
@@ -137,60 +155,30 @@ Config loadConfig() {
 }
 
 
-void saveConfig(const Config& config) {
+void saveConfig(const Config& config, bool useIniFile) {
 //	dump(config);
 
-#if defined(USE_INI_FILE)
-    TCHAR iniFilename[MAX_PATH+1] {};
-    accessSharedVariable([&](SharedVariable& sv) {
-        _tcscpy_s(iniFilename, sv.iniFilename);
-    });
+    if(useIniFile) {
+        IniFile iniFile {};
 
-    const std::wstring section = _T("Settings");
+        saveConfig1(config
+            , [&](const TCHAR* key, int val) {
+                iniFile.uif.setInt(iniFile.section, key, val);
+            }
+            , [&](const TCHAR* key, const TCHAR* val) {
+                iniFile.uif.setString(iniFile.section, key, val);
+            }
+        );
 
-    UnicodeIniFile uif {};
-    if(iniFilename[0]) {
-        uif.load(iniFilename);
+        iniFile.save();
+    } else {
+        saveConfig1(config
+            , [&](const TCHAR* key, int val) {
+                setRegDword(HKEY_CURRENT_USER, myKey, key, val);
+            }
+            , [&](const TCHAR* key, const TCHAR* val) {
+                setRegStr(HKEY_CURRENT_USER, myKey, key, val);
+            }
+        );
     }
-
-    const auto& setIniLong = [&](const TCHAR* key, int val) {
-        uif.setInt(section, key, val);
-    };
-
-    const auto& setIniStr = [&](const TCHAR* key, const TCHAR* val) {
-        uif.setString(section, key, val);
-    };
-
-    setIniLong(_T("Width")              , config.text.width);
-    setIniLong(_T("Height")             , config.text.height);
-    setIniLong(_T("Xpos")               , config.text.xPos);
-    setIniLong(_T("Ypos")               , config.text.yPos);
-    setIniLong(_T("LineSpacing")        , config.text.lineSpacing);
-    setIniLong(_T("ForegroundColor")    , config.text.color.foreground);
-    setIniLong(_T("BackgroundColor")    , config.text.color.background);
-    setIniStr (_T("Format")             , config.text.format.c_str());
-    setIniStr (_T("FontName")           , config.font.name.c_str());
-    setIniLong(_T("FontSize")           , config.font.size);
-    setIniLong(_T("FontItalic")         , config.font.italic);
-    setIniLong(_T("FontBold")           , config.font.bold);
-    setIniLong(_T("FontLocale")         , config.font.langId);
-    setIniLong(_T("FontQuality")        , config.font.quality);
-
-    uif.save(iniFilename);
-#else
-    setRegLong(_T("Width")              , config.text.width);
-    setRegLong(_T("Height")             , config.text.height);
-    setRegLong(_T("Xpos")               , config.text.xPos);
-    setRegLong(_T("Ypos")               , config.text.yPos);
-    setRegLong(_T("LineSpacing")        , config.text.lineSpacing);
-    setRegLong(_T("ForegroundColor")    , config.text.color.foreground);
-    setRegLong(_T("BackgroundColor")    , config.text.color.background);
-    setRegStr (_T("Format")             , config.text.format.c_str());
-    setRegStr (_T("FontName")           , config.font.name.c_str());
-    setRegLong(_T("FontSize")           , config.font.size);
-    setRegLong(_T("FontItalic")         , config.font.italic);
-    setRegLong(_T("FontBold")           , config.font.bold);
-    setRegLong(_T("FontLocale")         , config.font.langId);
-    setRegLong(_T("FontQuality")        , config.font.quality);
-#endif
 }

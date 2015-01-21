@@ -31,7 +31,7 @@ struct Config {
     } explore;
 };
 
-Config  loadConfig();
-void    saveConfig(const Config& config);
+Config  loadConfig(bool useIniFile = true);
+void    saveConfig(const Config& config, bool useIniFile = true);
 
 #endif
