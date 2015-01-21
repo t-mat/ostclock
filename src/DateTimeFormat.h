@@ -4,6 +4,6 @@
 using FormatOutput = std::array<TCHAR, 256>;
 
 void initDateTimeFormat();
-FormatOutput makeDateTimeString(const SYSTEMTIME& pt, const TCHAR* fmt, WORD iLang);
+FormatOutput makeDateTimeString(const SYSTEMTIME& pt, const TCHAR* fmt);
 
 #endif

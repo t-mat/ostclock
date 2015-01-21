@@ -179,13 +179,7 @@ void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
 
     SetTextColor(hdc, config.text.color.foreground);
     const RECT rcClock = getClientRect(hwnd);
-
-    auto f = makeDateTimeString(
-          pt
-        , config.text.format.data()
-        , LOCALE_USER_DEFAULT
-    );
-
+    auto f = makeDateTimeString(pt, config.text.format.data());
     const auto ept = drawText(
           hdcClock
         , f.data()
@@ -216,7 +210,7 @@ void onTimer(HWND hwnd, WPARAM) {
 }
 
 
-LRESULT onCalcRect(HWND hwnd) {
+LRESULT onCalcRect(HWND hwnd, const SYSTEMTIME& pt) {
     if(!(getWindowLongPtr(hwnd, GWL_STYLE) & WS_VISIBLE)) {
         return 0;
     }
@@ -224,12 +218,7 @@ LRESULT onCalcRect(HWND hwnd) {
     if(HDC hdc = GetDC(hwnd)) {
         font.select(hdc);
 
-        auto f = makeDateTimeString(
-              getDisplayTime()
-            , config.text.format.data()
-            , LOCALE_USER_DEFAULT
-        );
-
+        auto f = makeDateTimeString(pt, config.text.format.data());
         const auto ept = drawText(
               hdc
             , f.data()
@@ -275,7 +264,7 @@ wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         break;
 
     case TRAYCLOCK_MSG_CALC_RECT:
-        return onCalcRect(hwnd);
+        return onCalcRect(hwnd, getDisplayTime());
 
     case WM_ERASEBKGND:
         return 0;
@@ -321,7 +310,7 @@ wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     case WM_WINDOWPOSCHANGING:
         if(auto* pwp = reinterpret_cast<LPWINDOWPOS>(lParam)) {
             if(IsWindowVisible(hwnd) && !(pwp->flags & SWP_NOSIZE)) {
-                const auto h = HIWORD(onCalcRect(hwnd));
+                const auto h = HIWORD(onCalcRect(hwnd, getDisplayTime()));
                 if(pwp->cy > h) {
                     pwp->cy = h;
                 }

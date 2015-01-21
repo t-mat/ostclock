@@ -4,7 +4,7 @@
 namespace {
 
 // Process "\n".
-void pass1(const SYSTEMTIME&, WORD, FormatOutput& dst, const TCHAR* src) {
+void pass1(const SYSTEMTIME&, FormatOutput& dst, const TCHAR* src) {
     const auto* s = src;
     auto* d = dst.data();
     for(; *s; ++s) {
@@ -21,7 +21,7 @@ void pass1(const SYSTEMTIME&, WORD, FormatOutput& dst, const TCHAR* src) {
 
 // strftime()
 // http://msdn.microsoft.com/en-us/library/fe06s4ak.aspx
-void pass2(const SYSTEMTIME& pt, WORD, FormatOutput& dst, const FormatOutput& src) {
+void pass2(const SYSTEMTIME& pt, FormatOutput& dst, const FormatOutput& src) {
     // Windows FILETIME examples
     // http://www.programmingforums.org/post45492.html
 
@@ -54,9 +54,9 @@ void initDateTimeFormat() {
 }
 
 
-FormatOutput makeDateTimeString(const SYSTEMTIME& pt, const TCHAR* fmt, WORD iLang) {
+FormatOutput makeDateTimeString(const SYSTEMTIME& pt, const TCHAR* fmt) {
     std::array<FormatOutput,2> buf;
-    pass1(pt, iLang, buf[0], fmt);
-    pass2(pt, iLang, buf[1], buf[0]);
+    pass1(pt, buf[0], fmt);
+    pass2(pt, buf[1], buf[0]);
     return buf[1];
 }
