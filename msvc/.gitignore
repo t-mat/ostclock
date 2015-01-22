@@ -8,6 +8,7 @@
 *.exp
 *.ilk
 *.ipch
+*.log
 *.opensdf
 *.pdb
 *.sdf
