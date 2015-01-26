@@ -6,7 +6,9 @@ Just a clock which can be configured with [MSVC `strftime()`](http://msdn.micros
 
 # Build
 
-Open `msvc/vc2013/ostclock.sln`.
+ - Install [Visual Studio Community 2013](http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx)
+ - Run `build.bat`
+ - Copy `msvc\vc2013\ostclock.exe` and `msvc\vc2013\ostclock_dll.dll` to your own directory.
 
 
 # License
