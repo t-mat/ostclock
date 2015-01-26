@@ -203,6 +203,34 @@ wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+bool startup() {
+    const auto* cmd = GetCommandLine();
+
+    bool bQuit = (_tcsstr(cmd, _T("/quit")) != nullptr);
+    bool bRestart = (_tcsstr(cmd, _T("/restart")) != nullptr);
+
+    if(bQuit || bRestart) {
+        HWND hwndTrayClock = findTrayClock();
+        sendMessage(hwndTrayClock, WM_CLOCK_END_CLOCK, 0, 0);
+    }
+
+    if(bQuit) {
+        return false;
+    }
+
+    if(bRestart) {
+        for(int i = 0; i < 10; ++i) {
+            EnsureSingleInstance ensureSingleInstance { _T("Local\\") _T(APPNAME) };
+            if(ensureSingleInstance.good()) {
+                break;
+            }
+            Sleep(50);
+        }
+    }
+
+    return true;
+}
+
 } // Anonymous namespace
 
 
@@ -216,6 +244,10 @@ LRESULT sendMessageToTasktrayClock(UINT message, WPARAM wParam, LPARAM lParam) {
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+    if(! startup()) {
+        return 0;
+    }
+
     EnsureSingleInstance ensureSingleInstance { _T("Local\\") _T(APPNAME) };
     if(! ensureSingleInstance.good()) {
         return 0;
