@@ -33,10 +33,12 @@ struct Bitmap {
         }
     }
 
-    void select(HDC hdc) const {
+    HGDIOBJ select(HDC hdc) const {
+        HGDIOBJ oldObj = nullptr;
         if(good()) {
-            SelectObject(hdc, hBitmap);
+            oldObj = SelectObject(hdc, hBitmap);
         }
+        return oldObj;
     }
 
     BITMAP getBitmap() const {

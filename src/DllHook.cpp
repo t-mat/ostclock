@@ -137,8 +137,8 @@ void drawClockSub(HWND hwnd, HDC hdc, const SYSTEMTIME& pt) {
             hdcClock.createCompatibleDc_(hdc);
             if(hdcClock) {
                 if(clockBitmap.create(hdc, getClientRect(hwnd))) {
-                    clockBitmap.select(hdcClock);
-                    font.select(hdcClock);
+                    hdcClock.select(clockBitmap);
+                    hdcClock.select(font);
                     SetBkMode   (hdcClock, TRANSPARENT);
                     SetTextAlign(hdcClock, TA_CENTER|TA_TOP);
                     SetTextColor(hdcClock, config.text.color.foreground);
@@ -202,7 +202,7 @@ LRESULT onCalcRect(HWND hwnd, const SYSTEMTIME& pt) {
     }
 
     if(auto hdc = Hdc::getDc(hwnd)) {
-        font.select(hdc);
+        hdc.select(font);
 
         auto f = makeDateTimeString(pt, config.text.format.data());
         const auto ept = drawText(

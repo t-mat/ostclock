@@ -58,6 +58,11 @@ struct Hdc {
         }
     }
 
+    template<class T>
+    HGDIOBJ select(const T& t) const {
+        return t.select(gdiHdc);
+    }
+
 protected:
     const HWND InvalidHwndValue = reinterpret_cast<HWND>(-1);
 

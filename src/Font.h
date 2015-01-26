@@ -42,10 +42,12 @@ struct Font {
     }
 
 
-    void select(HDC hdc) const {
+    HGDIOBJ select(HDC hdc) const {
+        HGDIOBJ oldObj = nullptr;
         if(hdc && hFont) {
-            SelectObject(hdc, hFont);
+            oldObj = SelectObject(hdc, hFont);
         }
+        return oldObj;
     }
 
 

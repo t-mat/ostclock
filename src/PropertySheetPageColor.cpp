@@ -384,7 +384,7 @@ void onChooseColor(HWND hDlg, WORD, int& color) {
 
 
 void onCommand(HWND hDlg, WORD id, WORD code) {
-    const bool c = [&]() {
+    const bool changed = [&]() {
         const HWND item = GetDlgItem(hDlg, id);
 
         TCHAR className[256] {};
@@ -423,7 +423,7 @@ void onCommand(HWND hDlg, WORD id, WORD code) {
         break;
     }
 
-    if(c) {
+    if(changed) {
         sendMessage(GetParent(hDlg), PSM_CHANGED, hDlg);
     }
 }
@@ -461,13 +461,14 @@ void onDrawItem(HWND, WPARAM, LPARAM lParam) {
                 }
             }();
 
-            auto oldPen = SelectObject(dis->hDC, GetStockObject(DC_PEN));
-            auto oldBrush = SelectObject(dis->hDC, GetStockObject(DC_BRUSH));
-            SetDCPenColor(dis->hDC, frameColor);
-            SetDCBrushColor(dis->hDC, color);
+            const auto hdc = dis->hDC;
+            const auto oldPen = SelectObject(hdc, GetStockObject(DC_PEN));
+            const auto oldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
+            SetDCPenColor(hdc, frameColor);
+            SetDCBrushColor(hdc, color);
             const int r = 16;
             RoundRect(
-                  dis->hDC
+                  hdc
                 , dis->rcItem.left
                 , dis->rcItem.top
                 , dis->rcItem.right
@@ -475,8 +476,8 @@ void onDrawItem(HWND, WPARAM, LPARAM lParam) {
                 , r
                 , r
             );
-            SelectObject(dis->hDC, oldPen);
-            SelectObject(dis->hDC, oldBrush);
+            SelectObject(hdc, oldPen);
+            SelectObject(hdc, oldBrush);
         }
         break;
     }
