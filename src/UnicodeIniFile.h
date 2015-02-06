@@ -69,50 +69,32 @@ public:
             }
         }
 
-        // load key names
+        // load key-values
         for(const auto& sectionName : sectionNames) {
+            auto& section = sectionKeyNames[sectionName];
             std::vector<wchar_t> kvBuf(65536);
-            const auto namesLen = ::GetPrivateProfileSectionW(
+            const auto len = ::GetPrivateProfileStringW(
                   sectionName.c_str()
+                , nullptr
+                , nullptr
                 , kvBuf.data()
                 , static_cast<DWORD>(kvBuf.size())
                 , filename.c_str()
             );
-            if(namesLen > 0) {
-                auto& section = sectionKeyNames[sectionName];
-                kvBuf.resize(namesLen);
-                kvBuf.push_back(0);
-                auto* p = kvBuf.data();
-                auto* e = &kvBuf.back();
-                while(p < e && *p != 0) {
-                    const auto len = wcslen(p);
-                    for(auto* q = p; *q != 0; ++q) {
-                        if(*q == L'=') {
-                            *q = 0;
-                            break;
-                        }
-                    }
-                    section.push_back(p);
-                    p += len + 1;
-                }
-            }
-        }
-
-        // load values
-        for(const auto& sectionName : sectionNames) {
-            const auto& keyNames = sectionKeyNames[sectionName];
-            for(const auto& keyName : keyNames) {
-                std::vector<wchar_t> valBuf(65536);
+            kvBuf[len] = 0;
+            for(const auto* key = kvBuf.data(); *key; key += wcslen(key) + 1) {
+                wchar_t val[1024];
                 const auto len = ::GetPrivateProfileStringW(
                       sectionName.c_str()
-                    , keyName.c_str()
-                    , L""
-                    , valBuf.data()
-                    , static_cast<DWORD>(valBuf.size())
+                    , key
+                    , nullptr
+                    , val
+                    , _countof(val)
                     , filename.c_str()
                 );
-                valBuf[len] = 0;
-                properties[sectionName][keyName] = valBuf.data();
+                val[len] = 0;
+                section.push_back(key);
+                properties[sectionName][key] = val;
             }
         }
     }
@@ -204,7 +186,7 @@ public:
     static String getUsername() {
         wchar_t username[UNLEN+1] {};
         DWORD usernameSize = _countof(username);
-        const auto result = ::GetUserName(username, &usernameSize);
+        const auto result = ::GetUserNameW(username, &usernameSize);
         if(0 == result) {
             username[0] = 0;
         }
